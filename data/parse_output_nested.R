@@ -2,8 +2,14 @@
 rm(list=ls())
 
 select_model = function(vals, ses=NULL, u=0, ic='DIC', 
-                        n_pars= c(6, 5, 10, 6, 8) ) {
+                        n_pars= c(7, 5, 10, 6, 8) ) {
   #' Select a model based on fit index and uncertainty
+  #' 
+  #' A, 6 pars:   gamma00, gamma10, gamma20, tau0, tau1, tau01, sigma
+  #' B, 5 pars:   gamma00, gamma10, gamma20, tau0, sigma
+  #' C, 10 pars:  gamma00, gamma10, gamma20, tau0, tau1, tau2, tau01, tau02, tau12, sigma
+  #' D, 6 pars:   gamma00, gamma10, tau0, tau1, tau01, sigma
+  #' E, 8 pars:   gamma00, gamma10, gamma20, gamma30, tau0, tau1, tau01, sigma
   
   if(u==0) {
     return(as.numeric(which.min(vals)))
