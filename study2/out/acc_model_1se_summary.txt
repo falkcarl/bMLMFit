@@ -1,0 +1,40 @@
+
+Call:
+glm(formula = accuracy ~ ic * marg * N * J, family = "binomial", 
+    data = melt_dat)
+
+Coefficients:
+                  Estimate Std. Error z value Pr(>|z|)
+(Intercept)       10.69421  436.31701   0.025    0.980
+icWAIC             9.05891  789.19046   0.011    0.991
+icLOO              8.93249  753.81850   0.012    0.991
+marg              16.92599  872.63403   0.019    0.985
+N                 -0.19821   14.54391  -0.014    0.989
+J                  1.21742   43.63173   0.028    0.978
+icWAIC:marg      -18.13235 1578.38092  -0.011    0.991
+icLOO:marg       -17.87950 1507.63700  -0.012    0.991
+icWAIC:N          -0.03578   34.00497  -0.001    0.999
+icLOO:N           -0.03592   31.44106  -0.001    0.999
+marg:N            -0.66885   29.08781  -0.023    0.982
+icWAIC:J           0.83400   78.91908   0.011    0.992
+icLOO:J            0.86179   75.38188   0.011    0.991
+marg:J             2.42877   87.26345   0.028    0.978
+N:J               -0.03154    1.45439  -0.022    0.983
+icWAIC:marg:N      0.20063   68.00994   0.003    0.998
+icLOO:marg:N       0.20089   62.88212   0.003    0.997
+icWAIC:marg:J     -1.77272  157.83815  -0.011    0.991
+icLOO:marg:J      -1.82830  150.76377  -0.012    0.990
+icWAIC:N:J        -0.01085    3.40050  -0.003    0.997
+icLOO:N:J         -0.03209    3.14411  -0.010    0.992
+marg:N:J          -0.05491    2.90878  -0.019    0.985
+icWAIC:marg:N:J   -0.01970    6.80100  -0.003    0.998
+icLOO:marg:N:J     0.02279    6.28822   0.004    0.997
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 4958.30  on 5399  degrees of freedom
+Residual deviance:  914.19  on 5376  degrees of freedom
+AIC: 962.19
+
+Number of Fisher Scoring iterations: 21
+
