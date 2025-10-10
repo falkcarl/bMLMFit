@@ -881,7 +881,8 @@ prop_table = melt(mod_select,
 write.csv(prop_table,'out/prop_table.csv')
 
 
-# IC Performance With Uncertainty -------------------------------------------------------------
+# CFF: modifying headings
+# IC Performance With Uncertainty (1SE, 4 DIC) -------------------------------------------------------------
 
 ## Model accurate model selection -----------
 
@@ -1327,3 +1328,906 @@ prop_table = melt(mod_select,
                   value.name = 'p_choose')
 write.csv(prop_table,'out/prop_table_1se.csv')
 
+
+
+
+
+
+# CFF: modifying headings
+# IC Performance With Uncertainty (2SE, 7 DIC) -------------------------------------------------------------
+
+## Model accurate model selection -----------
+
+# compute accuracy
+for(i in FIT_ICS){
+  dat[,paste0('acc_2se_',i)] = as.numeric(dat[,paste0('win_2se_',i)]==TRUE_MOD)
+}
+
+# melt df
+melt_dat = melt(dat, id.vars = IVS,
+                measure.vars = paste0('acc_2se_',FIT_ICS), 
+                variable.name = 'ic',
+                value.name = 'accuracy')
+melt_dat$ic = sapply(melt_dat$ic, function(x) 
+  strsplit(as.character(x), split = '_')[[1]][3])
+
+# make fit index a factor
+melt_dat$ic = factor(melt_dat$ic, levels = c('DIC','WAIC','LOO'))
+
+# center predictors
+melt_dat[,IVS] = apply(melt_dat[,IVS],2,function(x) x - median(x))
+
+# fit
+# acc_mod_1se = glm(accuracy ~ ic*marg*N*J*TAU0*TAU1*G10*G20,
+#               data=melt_dat,
+#               family='binomial')
+# 
+# capture.output(summary(acc_mod_1se), file = 'out/acc_model_1se_summary.txt')
+
+
+## Visualize performance ---------------------------------------------------
+
+
+## Melt
+melt_dat = melt(dat, 
+                id.vars = IVS,
+                measure.vars = paste0('acc_2se_',FIT_ICS), 
+                variable.name = 'ic',
+                value.name = 'accuracy')
+melt_dat$ic = sapply(melt_dat$ic, function(x) 
+  strsplit(as.character(x), split = '_')[[1]][3])
+melt_dat$ic = factor(melt_dat$ic, levels = c('DIC','WAIC','LOO'))
+
+melt_dat$marg = ifelse(melt_dat$marg==0, 'Conditional', 'Marginal')
+
+
+### ICs --------
+
+#### overall -------------- 
+
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_barplot.pdf', 6, 6)
+
+## Compute accuaracy and error
+pcor = tapply(melt_dat$accuracy, melt_dat$ic, mean)
+elb  = tapply(melt_dat$accuracy, melt_dat$ic, ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, melt_dat$ic, ci_binom, bound=2)
+
+bp = barplot(pcor, ylim=c(0,1.1), ylab='P(Correct)')
+arrows(bp, elb, bp, eub,length=0)
+
+dev.off()
+
+#### by estimation strategy -------------- 
+
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_barplot_by_strat.pdf', 6, 6)
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$marg, melt_dat$ic), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$marg, melt_dat$ic), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$marg, melt_dat$ic), ci_binom, bound=2)
+
+bp = barplot(pcor, beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Estimation Approach'))
+arrows(bp, elb, bp, eub,length=0)
+
+dev.off()
+
+
+### ICs X N --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$N, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X J --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_j_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_j_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_j_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X Tau0 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$TAU0, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$TAU0, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$TAU0, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_t0_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[0]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_t0_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[0]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_t0_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[0]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X Tau1 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$TAU1, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$TAU1, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$TAU1, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_t1_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[1]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_t1_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[1]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_t1_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[1]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X gam1 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$G10, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$G10, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$G10, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_g1_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[1]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_g1_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[1]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_g1_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[1]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X gam2 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$G20, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$G20, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$G20, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_g2_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[2]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_g2_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[2]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_g2_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[2]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+
+
+### ICs X N X J --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$N, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+### overall
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_j_barplot.pdf', 8, 4)
+par(mar=c(5, 4, 6, 2) + 0.1)
+layout(matrix(1:3,1,3))
+
+for(ic in FIT_ICS) {
+  bp = barplot(apply(pcor, 1:3, mean)[,,ic], beside=T, ylim=c(0,1.1),
+               ylab='P(Correct)', xlab="Cluster Size",
+               legend.text = T, 
+               main=ic,
+               args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
+  arrows(bp, apply(elb, 1:3, mean)[,,ic], bp, apply(eub, 1:3, mean)[,,ic],length=0)
+  
+}
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_j_barplot_conditional.pdf', 8, 4)
+par(mar=c(5, 4, 6, 2) + 0.1)
+layout(matrix(1:3,1,3))
+
+for(ic in FIT_ICS) {
+  bp = barplot(pcor[,,ic,1], beside=T, ylim=c(0,1.1),
+               ylab='P(Correct)', xlab="Cluster Size",
+               legend.text = T, 
+               main=ic,
+               args.legend = list(x='topleft', bty='n', 1, title='Observation Size',ncol=3))
+  arrows(bp, elb[,,ic,1], bp, eub[,,ic,1],length=0)
+  
+}
+mtext('Conditional Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_j_barplot_marginal.pdf', 8, 4)
+par(mar=c(5, 4, 6, 2) + 0.1)
+layout(matrix(1:3,1,3))
+
+for(ic in FIT_ICS) {
+  bp = barplot(pcor[,,ic,2], beside=T, ylim=c(0,1.1),
+               ylab='P(Correct)', xlab="Cluster Size",
+               legend.text = T, 
+               main=ic,
+               args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
+  arrows(bp, elb[,,ic,2], bp, eub[,,ic,2],length=0)
+  
+}
+mtext('Marginal Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
+
+dev.off()
+
+
+## Overall model selection -------------------------------------------------
+
+#' create indexable array with proportions of model selection per: 
+#'    1. Fit index
+#'    2. Model selected
+#'    3. N
+#'    4. J
+#'    5. Tau0
+#'    6. Tau1
+#'    7. gamma10
+#'    8. gamma20
+#' but this time, incorporate the following uncertainty metrics: 
+#'    DIC : at least 7 points difference
+#'    WAIC: 2 SE difference
+#'    LOO : 2 SE difference
+#' these are compared between top-2 models and 
+#' simpler model is chosen in the case of no robust difference
+#' (see data/parse_output_nested.R for implementation)
+
+# specify model complexity per model
+# (ignoring random effect estimates per cluster)
+
+mod_select = array(NA,dim = c(length(FIT_ICS),
+                              length(MODELS),
+                              length(unique(dat$N)),
+                              length(unique(dat$J)),
+                              length(unique(dat$TAU0)),
+                              length(unique(dat$TAU1)),
+                              length(unique(dat$G10)),
+                              length(unique(dat$G20)), 
+                              length(unique(dat$marg))),
+                   dimnames = list(FIT_ICS,
+                                   MODELS,
+                                   unique(dat$N),
+                                   unique(dat$J),
+                                   unique(dat$TAU0),
+                                   unique(dat$TAU1),
+                                   unique(dat$G10),
+                                   unique(dat$G20), 
+                                   unique(dat$marg))
+)
+
+for(i in FIT_ICS) {
+  
+  win_vec = dat[,paste0('win_2se_',i)]
+  
+  for(m in MODELS) {
+    mod_select[i,m,,,,,,,] = tapply(win_vec,
+                                    list(dat$N,
+                                         dat$J,
+                                         dat$TAU0,
+                                         dat$TAU1,
+                                         dat$G10,
+                                         dat$G20, 
+                                         dat$marg),
+                                    function(x) mean(x==m))
+    
+  }
+}
+
+
+
+### overall
+IC_barplot_modselect('figs/ic_performance/w_uncertainty2se/overall_mod_select_barplot.pdf', 
+                     leg_pos = 'topright')
+
+### conditional
+IC_barplot_modselect('figs/ic_performance/w_uncertainty2se/overall_mod_select_barplot_conditional.pdf', 
+                     est_idx = '0', main_title = 'Conditional Estimation', 
+                     leg_pos = 'topright')
+
+### marginal
+IC_barplot_modselect('figs/ic_performance/w_uncertainty2se/overall_mod_select_barplot_marginal.pdf', 
+                     est_idx = '1', main_title = 'Marginal Estimation', 
+                     leg_pos = 'topright')
+
+
+### Create table with proportions -------------------------------------------
+
+prop_table = melt(mod_select, 
+                  varnames = c('IC','Model',IVS),
+                  value.name = 'p_choose')
+write.csv(prop_table,'out/prop_table_2se.csv')
+
+
+
+
+
+
+# CFF: modifying headings
+# IC Performance With Uncertainty (4SE, 10 DIC) -------------------------------------------------------------
+
+## Model accurate model selection -----------
+
+# compute accuracy
+for(i in FIT_ICS){
+  dat[,paste0('acc_4se_',i)] = as.numeric(dat[,paste0('win_4se_',i)]==TRUE_MOD)
+}
+
+# melt df
+melt_dat = melt(dat, id.vars = IVS,
+                measure.vars = paste0('acc_4se_',FIT_ICS), 
+                variable.name = 'ic',
+                value.name = 'accuracy')
+melt_dat$ic = sapply(melt_dat$ic, function(x) 
+  strsplit(as.character(x), split = '_')[[1]][3])
+
+# make fit index a factor
+melt_dat$ic = factor(melt_dat$ic, levels = c('DIC','WAIC','LOO'))
+
+# center predictors
+melt_dat[,IVS] = apply(melt_dat[,IVS],2,function(x) x - median(x))
+
+# fit
+# acc_mod_1se = glm(accuracy ~ ic*marg*N*J*TAU0*TAU1*G10*G20,
+#               data=melt_dat,
+#               family='binomial')
+# 
+# capture.output(summary(acc_mod_1se), file = 'out/acc_model_1se_summary.txt')
+
+
+## Visualize performance ---------------------------------------------------
+
+
+## Melt
+melt_dat = melt(dat, 
+                id.vars = IVS,
+                measure.vars = paste0('acc_4se_',FIT_ICS), 
+                variable.name = 'ic',
+                value.name = 'accuracy')
+melt_dat$ic = sapply(melt_dat$ic, function(x) 
+  strsplit(as.character(x), split = '_')[[1]][3])
+melt_dat$ic = factor(melt_dat$ic, levels = c('DIC','WAIC','LOO'))
+
+melt_dat$marg = ifelse(melt_dat$marg==0, 'Conditional', 'Marginal')
+
+
+### ICs --------
+
+#### overall -------------- 
+
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_barplot.pdf', 6, 6)
+
+## Compute accuaracy and error
+pcor = tapply(melt_dat$accuracy, melt_dat$ic, mean)
+elb  = tapply(melt_dat$accuracy, melt_dat$ic, ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, melt_dat$ic, ci_binom, bound=2)
+
+bp = barplot(pcor, ylim=c(0,1.1), ylab='P(Correct)')
+arrows(bp, elb, bp, eub,length=0)
+
+dev.off()
+
+#### by estimation strategy -------------- 
+
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_barplot_by_strat.pdf', 6, 6)
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$marg, melt_dat$ic), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$marg, melt_dat$ic), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$marg, melt_dat$ic), ci_binom, bound=2)
+
+bp = barplot(pcor, beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Estimation Approach'))
+arrows(bp, elb, bp, eub,length=0)
+
+dev.off()
+
+
+### ICs X N --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$N, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X J --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_j_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_j_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_j_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title='Cluster Size',ncol=3))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X Tau0 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$TAU0, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$TAU0, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$TAU0, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_t0_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[0]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_t0_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[0]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_t0_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[0]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X Tau1 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$TAU1, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$TAU1, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$TAU1, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_t1_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[1]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_t1_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[1]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_t1_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(tau[1]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X gam1 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$G10, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$G10, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$G10, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_g1_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[1]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_g1_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[1]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_g1_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[1]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+### ICs X gam2 --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$G20, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$G20, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$G20, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_g2_barplot.pdf', 6, 6)
+
+bp = barplot(apply(pcor, 1:2, mean), beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, 
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[2]),ncol=1))
+arrows(bp, apply(elb, 1:2, mean), bp, apply(eub, 1:2, mean),length=0)
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_g2_barplot_conditional.pdf', 6, 6)
+
+bp = barplot(pcor[,,1], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T,  main='Conditional Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[2]),ncol=1))
+arrows(bp, elb[,,1], bp, eub[,,1],length=0)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_g2_barplot_marginal.pdf', 6, 6)
+
+bp = barplot(pcor[,,2], beside=T, ylim=c(0,1.1), ylab='P(Correct)', 
+             legend.text = T, main='Marginal Estimation',
+             args.legend = list(x='topleft', bty='n', 1, title=expression(gamma[2]),ncol=1))
+arrows(bp, elb[,,2], bp, eub[,,2],length=0)
+
+dev.off()
+
+
+
+### ICs X N X J --------
+
+pcor = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$N, melt_dat$ic, melt_dat$marg), mean)
+elb  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=1)
+eub  = tapply(melt_dat$accuracy, list(melt_dat$J, melt_dat$N, melt_dat$ic, melt_dat$marg), ci_binom, bound=2)
+
+### overall
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_j_barplot.pdf', 8, 4)
+par(mar=c(5, 4, 6, 2) + 0.1)
+layout(matrix(1:3,1,3))
+
+for(ic in FIT_ICS) {
+  bp = barplot(apply(pcor, 1:3, mean)[,,ic], beside=T, ylim=c(0,1.1),
+               ylab='P(Correct)', xlab="Cluster Size",
+               legend.text = T, 
+               main=ic,
+               args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
+  arrows(bp, apply(elb, 1:3, mean)[,,ic], bp, apply(eub, 1:3, mean)[,,ic],length=0)
+  
+}
+
+dev.off()
+
+### conditional
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_j_barplot_conditional.pdf', 8, 4)
+par(mar=c(5, 4, 6, 2) + 0.1)
+layout(matrix(1:3,1,3))
+
+for(ic in FIT_ICS) {
+  bp = barplot(pcor[,,ic,1], beside=T, ylim=c(0,1.1),
+               ylab='P(Correct)', xlab="Cluster Size",
+               legend.text = T, 
+               main=ic,
+               args.legend = list(x='topleft', bty='n', 1, title='Observation Size',ncol=3))
+  arrows(bp, elb[,,ic,1], bp, eub[,,ic,1],length=0)
+  
+}
+mtext('Conditional Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
+
+dev.off()
+
+### marginal
+pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_j_barplot_marginal.pdf', 8, 4)
+par(mar=c(5, 4, 6, 2) + 0.1)
+layout(matrix(1:3,1,3))
+
+for(ic in FIT_ICS) {
+  bp = barplot(pcor[,,ic,2], beside=T, ylim=c(0,1.1),
+               ylab='P(Correct)', xlab="Cluster Size",
+               legend.text = T, 
+               main=ic,
+               args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
+  arrows(bp, elb[,,ic,2], bp, eub[,,ic,2],length=0)
+  
+}
+mtext('Marginal Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
+
+dev.off()
+
+
+## Overall model selection -------------------------------------------------
+
+#' create indexable array with proportions of model selection per: 
+#'    1. Fit index
+#'    2. Model selected
+#'    3. N
+#'    4. J
+#'    5. Tau0
+#'    6. Tau1
+#'    7. gamma10
+#'    8. gamma20
+#' but this time, incorporate the following uncertainty metrics: 
+#'    DIC : at least 10 points difference
+#'    WAIC: 4 SE difference
+#'    LOO : 4 SE difference
+#' these are compared between top-2 models and 
+#' simpler model is chosen in the case of no robust difference
+#' (see data/parse_output_nested.R for implementation)
+
+# specify model complexity per model
+# (ignoring random effect estimates per cluster)
+
+mod_select = array(NA,dim = c(length(FIT_ICS),
+                              length(MODELS),
+                              length(unique(dat$N)),
+                              length(unique(dat$J)),
+                              length(unique(dat$TAU0)),
+                              length(unique(dat$TAU1)),
+                              length(unique(dat$G10)),
+                              length(unique(dat$G20)), 
+                              length(unique(dat$marg))),
+                   dimnames = list(FIT_ICS,
+                                   MODELS,
+                                   unique(dat$N),
+                                   unique(dat$J),
+                                   unique(dat$TAU0),
+                                   unique(dat$TAU1),
+                                   unique(dat$G10),
+                                   unique(dat$G20), 
+                                   unique(dat$marg))
+)
+
+for(i in FIT_ICS) {
+  
+  win_vec = dat[,paste0('win_4se_',i)]
+  
+  for(m in MODELS) {
+    mod_select[i,m,,,,,,,] = tapply(win_vec,
+                                    list(dat$N,
+                                         dat$J,
+                                         dat$TAU0,
+                                         dat$TAU1,
+                                         dat$G10,
+                                         dat$G20, 
+                                         dat$marg),
+                                    function(x) mean(x==m))
+    
+  }
+}
+
+
+
+### overall
+IC_barplot_modselect('figs/ic_performance/w_uncertainty4se/overall_mod_select_barplot.pdf', 
+                     leg_pos = 'topright')
+
+### conditional
+IC_barplot_modselect('figs/ic_performance/w_uncertainty4se/overall_mod_select_barplot_conditional.pdf', 
+                     est_idx = '0', main_title = 'Conditional Estimation', 
+                     leg_pos = 'topright')
+
+### marginal
+IC_barplot_modselect('figs/ic_performance/w_uncertainty4se/overall_mod_select_barplot_marginal.pdf', 
+                     est_idx = '1', main_title = 'Marginal Estimation', 
+                     leg_pos = 'topright')
+
+
+### Create table with proportions -------------------------------------------
+
+prop_table = melt(mod_select, 
+                  varnames = c('IC','Model',IVS),
+                  value.name = 'p_choose')
+write.csv(prop_table,'out/prop_table_4se.csv')
