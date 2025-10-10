@@ -1,11 +1,13 @@
 
 rm(list=ls())
 
+DICvals <- c(4, 7, 10)
+
 select_model = function(vals, ses=NULL, u=0, ic='DIC', 
                         n_pars= c(7, 5, 10, 6, 8) ) {
   #' Select a model based on fit index and uncertainty
   #' 
-  #' A, 6 pars:   gamma00, gamma10, gamma20, tau0, tau1, tau01, sigma
+  #' A, 7 pars:   gamma00, gamma10, gamma20, tau0, tau1, tau01, sigma
   #' B, 5 pars:   gamma00, gamma10, gamma20, tau0, sigma
   #' C, 10 pars:  gamma00, gamma10, gamma20, tau0, tau1, tau2, tau01, tau02, tau12, sigma
   #' D, 6 pars:   gamma00, gamma10, tau0, tau1, tau01, sigma
@@ -75,7 +77,9 @@ colnames = c('cond','iter',
              'WAIC_p',
              'LOO_p',
              paste0('win_',c('DIC','WAIC','LOO')),
-             paste0('win_1se_',c('DIC','WAIC','LOO'))
+             paste0('win_1se_',c('DIC','WAIC','LOO')),
+             paste0('win_2se_',c('DIC','WAIC','LOO')),
+             paste0('win_4se_',c('DIC','WAIC','LOO'))
              )
 
 # preallocate
@@ -173,6 +177,16 @@ for(f in rds_files) {
     winning_1se_waic = select_model(waics, ses = waics_e, u = 1, ic = 'WAIC')
     winning_1se_loos = select_model(loos,  ses = loos_e,  u = 1, ic = 'LOO')
     
+    #CFF 2se
+    winning_2se_dic  = select_model(dics, u = DICvals[2], ic = 'DIC')
+    winning_2se_waic = select_model(waics, ses = waics_e, u = 2, ic = 'WAIC')
+    winning_2se_loos = select_model(loos,  ses = loos_e,  u = 2, ic = 'LOO')
+    
+    #CFF 4se
+    winning_4se_dic  = select_model(dics, u = DICvals[3], ic = 'DIC')
+    winning_4se_waic = select_model(waics, ses = waics_e, u = 4, ic = 'WAIC')
+    winning_4se_loos = select_model(loos,  ses = loos_e,  u = 4, ic = 'LOO')
+    
     # summary stats on diagnostics
     max_rhat = as.vector(sapply(x[[i]]$diag, function(j) max(j[,'Rhat'], na.rm=T)))
     min_ess  = as.vector(sapply(x[[i]]$diag, function(j) min(j[,'ESS'], na.rm=T)))
@@ -210,7 +224,13 @@ for(f in rds_files) {
                  winning_loos,
                  winning_1se_dic, 
                  winning_1se_waic, 
-                 winning_1se_loos
+                 winning_1se_loos,
+                 winning_2se_dic,                                  
+                 winning_2se_waic,
+                 winning_2se_loos,
+                 winning_4se_dic,                                                   
+                 winning_4se_waic,
+                 winning_4se_loos                 
                  )
     
     row = row+1
