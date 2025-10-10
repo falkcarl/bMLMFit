@@ -1,0 +1,361 @@
+---
+title: "MLM custom code"
+author: "Carl F. Falk"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Setup
+
+```{r}
+# load packages
+library(brms)
+library(rstan)
+library(loo)
+library(posterior)
+
+library(tictoc)
+
+source("fx.R") # function
+
+# This was setup from simulation study...
+nchains <- 2
+ncores <- 2
+iter <- 5000
+```
+
+## Load data
+
+```{r}
+dat <- read.csv("example_dataset_77.csv")
+```
+
+## Setup of models
+
+```{r}
+modA <- y ~ 1 + X1 + X2 + (X1|g)
+modB <- y ~ 1 + X1 + X2 + (1|g)
+modC <- y ~ 1 + X1 + X2 + (X1+X2|g)
+modD <- y ~ 1 + X1 + (X1|g)
+modE <- y ~ 1 + X1 + X2 + X3 + (X1|g)
+```
+
+# `brms`
+
+## Estimate Models
+
+```{r}
+tic()
+modA.brms = brm(modA, data=dat, chains=nchains, iter=iter, silent = 2,
+                cores=ncores, refresh = 0)
+# stancode(modA.brms) # to look at underlying stan code
+toc()
+
+tic()
+modB.brms = brm(modB, data=dat, chains=nchains, iter=iter, silent = 2,
+                cores=ncores, refresh = 0)
+toc()
+
+tic()
+modC.brms = brm(modC, data=dat, chains=nchains, iter=iter, silent = 2,
+                cores=ncores, refresh = 0)
+toc()
+
+tic()
+modD.brms = brm(modD, data=dat, chains=nchains, iter=iter, silent = 2,
+                cores=ncores, refresh = 0)
+toc()
+
+tic()
+modE.brms = brm(modE, data=dat, chains=nchains, iter=iter, silent = 2,
+                cores=ncores, refresh = 0)
+toc()
+```
+
+
+# Custom Marginal Likelihood code
+
+## Estimate Models
+
+```{r}
+tic()
+matsA <- mod.mat.mlm(modA, data=dat)
+modA.custom <- stan(file='mlmmarg.stan', data = matsA,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsB <- mod.mat.mlm(modB, data=dat)
+modB.custom <- stan(file='mlmmarg.stan', data = matsB,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsC <- mod.mat.mlm(modC, data=dat)
+modC.custom <- stan(file='mlmmarg.stan', data = matsC,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsD <- mod.mat.mlm(modD, data=dat)
+modD.custom <- stan(file='mlmmarg.stan', data = matsD,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsE <- mod.mat.mlm(modE, data=dat)
+modE.custom <- stan(file='mlmmarg.stan', data = matsE,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+```
+
+## Look at Diagnostics
+
+### Rhats
+```{r}
+# error sd, coefficients, random effect covariance matrix
+pars <- c("sig", "betas", "Tau")
+max(abs(summary(modA.custom, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modB.custom, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modC.custom, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modD.custom, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modE.custom, pars=pars)$summary[,"Rhat"]))
+```
+
+### Traceplots
+
+```{r}
+rstan::traceplot(modA.custom, pars = pars)
+rstan::traceplot(modB.custom, pars = pars)
+rstan::traceplot(modC.custom, pars = pars)
+rstan::traceplot(modD.custom, pars = pars)
+rstan::traceplot(modE.custom, pars = pars)
+```
+
+# Custom Conditional Likelihood code
+
+```{r}
+tic()
+matsA <- mod.mat.mlm(modA, data=dat)
+modA.custom.cond <- stan(file='mlmcond.stan', data = matsA,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsB <- mod.mat.mlm(modB, data=dat)
+modB.custom.cond <- stan(file='mlmcond.stan', data = matsB,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsC <- mod.mat.mlm(modC, data=dat)
+modC.custom.cond <- stan(file='mlmcond.stan', data = matsC,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsD <- mod.mat.mlm(modD, data=dat)
+modD.custom.cond <- stan(file='mlmcond.stan', data = matsD,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+
+tic()
+matsE <- mod.mat.mlm(modE, data=dat)
+modE.custom.cond <- stan(file='mlmcond.stan', data = matsE,
+                    chains = nchains, seed=5297,
+                    iter = iter, refresh = 0, cores = ncores)
+toc()
+```
+
+## Look at Diagnostics
+
+### Rhats
+```{r}
+# error sd, coefficients, random effect covariance matrix
+pars <- c("sig", "betas", "Tau")
+max(abs(summary(modA.custom.cond, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modB.custom.cond, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modC.custom.cond, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modD.custom.cond, pars=pars)$summary[,"Rhat"]))
+max(abs(summary(modE.custom.cond, pars=pars)$summary[,"Rhat"]))
+```
+
+### Traceplots
+
+```{r}
+rstan::traceplot(modA.custom.cond, pars = pars)
+rstan::traceplot(modB.custom.cond, pars = pars)
+rstan::traceplot(modC.custom.cond, pars = pars)
+rstan::traceplot(modD.custom.cond, pars = pars)
+rstan::traceplot(modE.custom.cond, pars = pars)
+```
+
+<!--
+# Can *blavaan* really do conditional likelihood?
+
+In retrospect, kind of besides the point if it cannot fit some of the models...
+
+## Marginal estimation
+-->
+```{r, eval=FALSE, echo=FALSE}
+library(blavaan)
+
+model <- '
+    level: within
+        FX1 =~ 1*X1
+        FX2 =~ 1*X2
+        y ~ FX1 + FX2
+    level: between
+        FX1 =~ 1*X1
+        FX2 =~ 1*X2
+        y ~ 1
+'
+
+modb.blavaan <- bsem(model = model, data = dat, cluster = "g", seed=5234,
+                     sample = 3000, n.chains = 4)
+```
+
+```{r, eval=FALSE, echo=FALSE}
+summary(modb.blavaan)
+loo(modb.blavaan@external$mcmcout)
+
+```
+
+<!--
+## Other options
+
+`"vb"` also uses stan, but how so? Variational Bayes. Which, I guess is not what we want. Warnings about it being experimental.
+
+```{r, eval=FALSE, echo=FALSE}
+modb.blavaan <- bsem(model = model, data = dat, cluster = "g", seed=5234,
+                     sample = 3000, n.chains = 4, target="vb")
+summary(modb.blavaan) # reports marginal log-likelihood
+```
+
+Two-level functionality is not available for jags.
+
+```{r, eval=FALSE, echo=FALSE}
+modb.blavaan <- bsem(model = model, data = dat, cluster = "g", seed=5234,
+                     sample = 3000, n.chains = 4, target="jags")
+```
+
+Two-level functionality is not available for stancond.
+
+```{r, eval=FALSE, echo=FALSE}
+modb.blavaan <- bsem(model = model, data = dat, cluster = "g", seed=5234,
+                     sample = 3000, n.chains = 4, target="stancond")
+```
+
+Two-level functionality is not available for stanclassic.
+
+```{r, eval=FALSE, echo=FALSE}
+modb.blavaan <- bsem(model = model, data = dat, cluster = "g", seed=5234,
+                     sample = 3000, n.chains = 4, target="stanclassic")
+```
+
+Maybe try save.lvs=TRUE?
+```{r, eval=FALSE, echo=FALSE}
+modb.blavaan <- bsem(model = model, data = dat, cluster = "g", seed=5234,
+                     sample = 3000, n.chains = 4, target="stan",
+                     save.lvs=TRUE)
+summary(modb.blavaan)
+```
+-->
+
+# Compare to `brms`
+
+## Parameter estimates
+
+Some code could automate comparisons between parameters..
+
+```{r}
+# Note Tau is not directly estimated, but sds and correlation matrix of random effects is
+pars <- c("gssig", "gsmat", "betas","sig")
+
+summary(modA.custom, pars = pars)$summary
+summary(modA.custom.cond, pars = pars)$summary
+summary(modA.brms)
+
+summary(modB.custom, pars = pars)$summary
+summary(modB.custom.cond, pars = pars)$summary
+summary(modB.brms)
+
+summary(modC.custom, pars = pars)$summary
+summary(modC.custom.cond, pars = pars)$summary
+summary(modC.brms)
+
+summary(modD.custom, pars = pars)$summary
+summary(modD.custom.cond, pars = pars)$summary
+summary(modD.brms)
+
+summary(modE.custom, pars = pars)$summary
+summary(modE.custom.cond, pars = pars)$summary
+summary(modE.brms)
+```
+
+
+### Fit stats
+
+```{r}
+loo(modA.custom)
+loo(modA.custom.cond)
+loo(modA.brms)
+
+
+loo(modB.custom)
+loo(modB.custom.cond)
+loo(modB.brms)
+
+loo(modC.custom)
+loo(modC.custom.cond)
+loo(modC.brms)
+
+loo(modD.custom)
+loo(modD.custom.cond)
+loo(modD.brms)
+
+loo(modE.custom)
+loo(modE.custom.cond)
+loo(modE.brms)
+
+
+waic(extract_log_lik(modA.custom))
+waic(extract_log_lik(modA.custom.cond))
+waic(modA.brms)
+
+waic(extract_log_lik(modB.custom))
+waic(extract_log_lik(modB.custom.cond))
+waic(modB.brms)
+
+waic(extract_log_lik(modC.custom))
+waic(extract_log_lik(modC.custom.cond))
+waic(modC.brms)
+
+waic(extract_log_lik(modD.custom))
+waic(extract_log_lik(modD.custom.cond))
+waic(modD.brms)
+
+waic(extract_log_lik(modE.custom))
+waic(extract_log_lik(modE.custom.cond))
+waic(modE.brms)
+
+```
+
+# Stuff
+
+```{r}
+devtools::session_info()
+```
