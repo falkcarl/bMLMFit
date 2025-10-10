@@ -8,6 +8,11 @@ ci_binom = function(x, bound=1) prop.test(sum(x), length(x))$conf.int[bound]
 
 options(max.print=999999) ## for storing regression output
 
+# CFF
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(RColorBrewer)
 
 # Set constants -----------------------------------------------------------
 
@@ -23,6 +28,30 @@ MODEL_COLS = alpha(RColorBrewer::brewer.pal(length(MODELS), 'Dark2'),.5) # for p
 dat = readRDS('data/fits_summary.rds')
 
 # table(dat[!duplicated(dat$cond), 'marg'])
+
+# CFF versions
+# Rhat
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$max_rhats, paste0("maxrhat_",1:5))})))
+# ESS
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$min_ess, paste0("miness_",1:5))})))
+# add parameters
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$d_g0, paste0("dg0_",1:5))})))
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$d_g1, paste0("dg1_",1:5))})))
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$d_g2, paste0("dg2_",1:5))})))
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$d_t0, paste0("dt0_",1:5))})))
+dat <- cbind(dat, t(apply(dat, 1, function(x){setNames(x$d_t1, paste0("dt1_",1:5))})))
+# reshape to longer by model (useful for model-level metrics, like rhat and ess)
+dat_long_mod <- dat %>% pivot_longer(cols= c(starts_with("maxrhat"),starts_with("miness"), matches("d[gt][0-2]_[1-5]")),
+                                     names_to = c(".value", "model"),
+                                     names_pattern= "(.*)_([1-5])$")
+dat_long_mod$N <- as.factor(dat_long_mod$N)
+dat_long_mod$J <- as.factor(dat_long_mod$J)
+dat_long_mod$marg <- factor(dat_long_mod$marg, levels=c(0,1), labels=c("Conditional","Marginal"))
+
+# reshape further by parameter
+dat_long_bias <- dat_long_mod %>% pivot_longer(cols=matches("d[gt][0-2]"),
+                                               names_to = "par",
+                                               values_to = "bias")
 
 # Summarize diagnostics ---------------------------------------------------
 ## Rhats ------------------------------------------------------------------
@@ -367,6 +396,23 @@ bias_barplot_3way('figs/bias/delta_j_barplot_conditional.pdf', 4, leg_title = 'O
 bias_barplot_3way('figs/bias/delta_j_barplot_marginal.pdf', 4, leg_title = 'Observation Size',
                   est_idx = '1',
                   group_title = 'Marginal Estimation')
+
+#CFF: Sean does bias in many different barplots
+#TODO: make barplot axes the same?
+#Look at bias especially with true model, numerical summaries
+#Do other visualization that has numerical summaries
+
+# model 1 is the true model, so this has bias
+biasplot <- dat_long_bias %>% filter(model==1) %>% group_by(N, J, marg, par) %>% reframe(meanbias = mean(bias)) %>%
+  ggplot(aes(x=N, y=J, fill=meanbias)) + 
+  facet_grid(marg ~ par) + 
+  geom_tile() + 
+  scale_fill_distiller(palette= "RdBu", direction=1, limits=c(-1,1)) +
+  geom_text(aes(label=sprintf("%.2f", meanbias)), size=3) + theme_bw()
+
+ggsave("figs/bias/bias.png", biasplot, width=8, height = 4)
+
+
 
 # IC Performance without Uncertainty -------------------------------------------------------------
 
