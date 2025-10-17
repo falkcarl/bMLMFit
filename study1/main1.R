@@ -806,13 +806,13 @@ pdf('figs/ic_performance/wo_uncertainty/pcorrect_ic_n_j_barplot.pdf', 8, 4)
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(apply(pcor, 1:3, mean)[,,ic], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:3, mean)[,n,], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, apply(elb, 1:3, mean)[,,ic], bp, apply(eub, 1:3, mean)[,,ic],length=0)
+  arrows(bp, apply(elb, 1:3, mean)[,n,], bp, apply(eub, 1:3, mean)[,n,],length=0)
   
 }
 
@@ -823,13 +823,13 @@ pdf('figs/ic_performance/wo_uncertainty/pcorrect_ic_n_j_barplot_conditional.pdf'
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,1], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,1], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', cex=1.5, title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,1], bp, eub[,,ic,1],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,1], bp, apply(eub, 1:4, mean)[,n,,1],length=0)
   
 }
 mtext('Conditional Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -841,13 +841,13 @@ pdf('figs/ic_performance/wo_uncertainty/pcorrect_ic_n_j_barplot_marginal.pdf', 8
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,2], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,2], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,2], bp, eub[,,ic,2],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,2], bp, apply(eub, 1:4, mean)[,n,,2],length=0)
   
 }
 mtext('Marginal Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -1278,13 +1278,13 @@ pdf('figs/ic_performance/w_uncertainty/pcorrect_ic_n_j_barplot.pdf', 8, 4)
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(apply(pcor, 1:3, mean)[,,ic], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:3, mean)[,n,], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, apply(elb, 1:3, mean)[,,ic], bp, apply(eub, 1:3, mean)[,,ic],length=0)
+  arrows(bp, apply(elb, 1:3, mean)[,n,], bp, apply(eub, 1:3, mean)[,n,],length=0)
   
 }
 
@@ -1295,13 +1295,13 @@ pdf('figs/ic_performance/w_uncertainty/pcorrect_ic_n_j_barplot_conditional.pdf',
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,1], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,1], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', 1, title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,1], bp, eub[,,ic,1],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,1], bp, apply(eub, 1:4, mean)[,n,,1],length=0)
   
 }
 mtext('Conditional Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -1313,13 +1313,13 @@ pdf('figs/ic_performance/w_uncertainty/pcorrect_ic_n_j_barplot_marginal.pdf', 8,
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,2], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,2], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,2], bp, eub[,,ic,2],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,2], bp, apply(eub, 1:4, mean)[,n,,2],length=0)
   
 }
 mtext('Marginal Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -1730,13 +1730,13 @@ pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_j_barplot.pdf', 8, 4)
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(apply(pcor, 1:3, mean)[,,ic], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:3, mean)[,n,], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, apply(elb, 1:3, mean)[,,ic], bp, apply(eub, 1:3, mean)[,,ic],length=0)
+  arrows(bp, apply(elb, 1:3, mean)[,n,], bp, apply(eub, 1:3, mean)[,n,],length=0)
   
 }
 
@@ -1747,13 +1747,13 @@ pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_j_barplot_conditional.pd
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,1], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,1], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', 1, title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,1], bp, eub[,,ic,1],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,1], bp, apply(eub, 1:4, mean)[,n,,1],length=0)
   
 }
 mtext('Conditional Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -1765,13 +1765,13 @@ pdf('figs/ic_performance/w_uncertainty2se/pcorrect_ic_n_j_barplot_marginal.pdf',
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,2], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,2], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,2], bp, eub[,,ic,2],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,2], bp, apply(eub, 1:4, mean)[,n,,2],length=0)
   
 }
 mtext('Marginal Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -2182,13 +2182,13 @@ pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_j_barplot.pdf', 8, 4)
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(apply(pcor, 1:3, mean)[,,ic], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:3, mean)[,n,], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, apply(elb, 1:3, mean)[,,ic], bp, apply(eub, 1:3, mean)[,,ic],length=0)
+  arrows(bp, apply(elb, 1:3, mean)[,n,], bp, apply(eub, 1:3, mean)[,n,],length=0)
   
 }
 
@@ -2199,13 +2199,13 @@ pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_j_barplot_conditional.pd
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,1], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,1], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', 1, title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,1], bp, eub[,,ic,1],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,1], bp, apply(eub, 1:4, mean)[,n,,1],length=0)
   
 }
 mtext('Conditional Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
@@ -2217,13 +2217,13 @@ pdf('figs/ic_performance/w_uncertainty4se/pcorrect_ic_n_j_barplot_marginal.pdf',
 par(mar=c(5, 4, 6, 2) + 0.1)
 layout(matrix(1:3,1,3))
 
-for(ic in FIT_ICS) {
-  bp = barplot(pcor[,,ic,2], beside=T, ylim=c(0,1.1),
+for(n in as.character(unique(melt_dat$N))) {
+  bp = barplot(apply(pcor, 1:4, mean)[,n,,2], beside=T, ylim=c(0,1.1),
                ylab='P(Correct)', xlab="Cluster Size",
                legend.text = T, 
-               main=ic,
+               main=paste0("Cluster Size = ",n),
                args.legend = list(x='topleft', bty='n', title='Observation Size',ncol=3))
-  arrows(bp, elb[,,ic,2], bp, eub[,,ic,2],length=0)
+  arrows(bp, apply(elb, 1:4, mean)[,n,,2], bp, apply(eub, 1:4, mean)[,n,,2],length=0)
   
 }
 mtext('Marginal Estimation', side=3, line=-1.25, outer=TRUE, cex=1, font=3)
